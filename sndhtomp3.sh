@@ -102,7 +102,7 @@ musician="$(echo "$info" |awk -F: '/Artist/{
       sox "$(basename "$infile" .sndh)".mp3 -t mp3 -C320.0 "$musician - $songname".mp3 trim "$trim" $precisetrim fade 0.03 0 5 norm 
     fi
     echo "Result: $(ls -l "$musician - $songname".mp3)"
-    #rm "$(basename "$infile" .sndh)".mp3
+    rm "$(basename "$infile" .sndh)".mp3
   fi
 if [ "$LOOPCOUNT" != "" ]
 then
