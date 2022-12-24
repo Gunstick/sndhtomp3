@@ -94,8 +94,15 @@ musician="$(echo "$info" |awk -F: '/Artist/{
     rm "$(basename "$infile" .sndh)".mp3 2>/dev/null
     ste-sndh-grab.sh "$infile"
     ls "$(basename "$infile" .sndh)".mp3
-    sox -b 16 -e signed-integer -c 2 -r 48000 -t raw - -t mp3 -C320.0 "$musician - $songname".mp3 trim "$trim" $precisetrim fade 0.03 0 5 norm < "$(basename "$infile" .sndh)".mp3 
-    rm "$(basename "$infile" .sndh)".mp3
+    if [ "$fadeout" = "no" ]
+    then
+      echo "$fadeoput not supported with DMA"
+      sox "$(basename "$infile" .sndh)".mp3 -t mp3 -C320.0 "$musician - $songname".mp3 trim "$trim" $precisetrim fade 0.03 0 5 norm 
+    else
+      sox "$(basename "$infile" .sndh)".mp3 -t mp3 -C320.0 "$musician - $songname".mp3 trim "$trim" $precisetrim fade 0.03 0 5 norm 
+    fi
+    echo "Result: $(ls -l "$musician - $songname".mp3)"
+    #rm "$(basename "$infile" .sndh)".mp3
   fi
 if [ "$LOOPCOUNT" != "" ]
 then
@@ -128,9 +135,14 @@ loopvol=$(
 echo "endvol=$endvol, loopvol=$loopvol"
 if [ "$endvol" -lt 3 ] || [ "$loopvol" -lt 3 ] || [ "$checkloop" = "0" ]
 then
-  echo "endvol=$endvol, non looped, no fade, len=$length"
-# fade 0.03 is to remove plopp from sc68
-  (sc68 -r48000  $subtune $SPECIAL -qqq --ym-engine=pulse --loop=1 -c "$infile" 
-   sox -b 16 -e signed-integer -c 2 -r 48000 -n -t raw - trim 0.0 1.0 ) | 
-  sox -b 16 -e signed-integer -c 2 -r 48000 -t raw - -t mp3 -C320.0 "$musician - $songname".mp3 trim "$trim" $((length+10)) fade 0.03 0 0 norm
+  if [ "${infile#*/DMA/}" = "$infile" ]
+  then
+    echo "endvol=$endvol, non looped, no fade, len=$length"
+    # fade 0.03 is to remove plopp from sc68
+    (sc68 -r48000  $subtune $SPECIAL -qqq --ym-engine=pulse --loop=1 -c "$infile" 
+     sox -b 16 -e signed-integer -c 2 -r 48000 -n -t raw - trim 0.0 1.0 ) | 
+    sox -b 16 -e signed-integer -c 2 -r 48000 -t raw - -t mp3 -C320.0 "$musician - $songname".mp3 trim "$trim" $((length+10)) fade 0.03 0 0 norm
+  else
+    echo "DMA no support yet for auto check non-looped tracks"
+  fi
 fi 
